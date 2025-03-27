@@ -1,64 +1,47 @@
 const { getTime } = global.utils;
 
 module.exports = {
-	config: {
-		name: "logsbot",
-		isBot: true,
-		version: "1.4",
-		author: "NTKhang",
-		envConfig: {
-			allow: true
-		},
-		category: "events"
-	},
+  config: {
+    name: "logsbot",
+    isBot: true,
+    version: "1.1",
+    author: "RANA",
+    envConfig: {
+      allow: true
+    },
+    category: "events"
+  },
 
-	langs: {
-		vi: {
-			title: "====== Nhật ký bot ======",
-			added: "\n✅\nSự kiện: bot được thêm vào nhóm mới\n- Người thêm: %1",
-			kicked: "\n❌\nSự kiện: bot bị kick\n- Người kick: %1",
-			footer: "\n- User ID: %1\n- Nhóm: %2\n- ID nhóm: %3\n- Thời gian: %4"
-		},
-		en: {
-			title: "====== Bot logs ======",
-			added: "\n✅\nEvent: bot has been added to a new group\n- Added by: %1",
-			kicked: "\n❌\nEvent: bot has been kicked\n- Kicked by: %1",
-			footer: "\n- User ID: %1\n- Group: %2\n- Group ID: %3\n- Time: %4"
-		}
-	},
+  onStart: async ({ usersData, threadsData, event, api }) => {
+    const personalGroupID = "7255259501235012"; // এখানে তোমার গ্রুপ আইডি বসাও
 
-	onStart: async ({ usersData, threadsData, event, api, getLang }) => {
-		if (
-			(event.logMessageType == "log:subscribe" && event.logMessageData.addedParticipants.some(item => item.userFbId == api.getCurrentUserID()))
-			|| (event.logMessageType == "log:unsubscribe" && event.logMessageData.leftParticipantFbId == api.getCurrentUserID())
-		) return async function () {
-			let msg = getLang("title");
-			const { author, threadID } = event;
-			if (author == api.getCurrentUserID())
-				return;
-			let threadName;
-			const { config } = global.GoatBot;
+    if (
+      (event.logMessageType == "log:subscribe" && event.logMessageData.addedParticipants.some(item => item.userFbId == api.getCurrentUserID())) ||
+      (event.logMessageType == "log:unsubscribe" && event.logMessageData.leftParticipantFbId == api.getCurrentUserID())
+    ) {
+      let msg = "🌟━【🔹 𝐁𝐎𝐓 𝐋𝐎𝐆𝐒 🔹】━🌟\n";
+      const { author, threadID } = event;
 
-			if (event.logMessageType == "log:subscribe") {
-				if (!event.logMessageData.addedParticipants.some(item => item.userFbId == api.getCurrentUserID()))
-					return;
-				threadName = (await api.getThreadInfo(threadID)).threadName;
-				const authorName = await usersData.getName(author);
-				msg += getLang("added", authorName);
-			}
-			else if (event.logMessageType == "log:unsubscribe") {
-				if (event.logMessageData.leftParticipantFbId != api.getCurrentUserID())
-					return;
-				const authorName = await usersData.getName(author);
-				const threadData = await threadsData.get(threadID);
-				threadName = threadData.threadName;
-				msg += getLang("kicked", authorName);
-			}
-			const time = getTime("DD/MM/YYYY HH:mm:ss");
-			msg += getLang("footer", author, threadName, threadID, time);
+      if (author == api.getCurrentUserID()) return;
+      let threadName;
 
-			for (const adminID of config.adminBot)
-				api.sendMessage(msg, adminID);
-		};
-	}
+      if (event.logMessageType == "log:subscribe") {
+        threadName = (await api.getThreadInfo(threadID)).threadName;
+        const authorName = await usersData.getName(author);
+        msg += `\n✅ 𝐁𝐎𝐓 𝐀𝐃𝐃𝐄𝐃 𝐈𝐍 𝐀 𝐆𝐑𝐎𝐔𝐏 ✅\n📌 𝐆𝐫𝐨𝐮𝐩 𝐍𝐚𝐦𝐞: ${threadName}\n👤 𝐀𝐝𝐝𝐞𝐝 𝐁𝐲: ${authorName}`;
+      } 
+      else if (event.logMessageType == "log:unsubscribe") {
+        const authorName = await usersData.getName(author);
+        const threadData = await threadsData.get(threadID);
+        threadName = threadData.threadName;
+        msg += `\n❌ 𝐁𝐎𝐓 𝐑𝐄𝐌𝐎𝐕𝐄𝐃 𝐅𝐑𝐎𝐌 𝐀 𝐆𝐑𝐎𝐔𝐏 ❌\n📌 𝐆𝐫𝐨𝐮𝐩 𝐍𝐚𝐦𝐞: ${threadName}\n👤 𝐑𝐞𝐦𝐨𝐯𝐞𝐝 𝐁𝐲: ${authorName}`;
+      }
+
+      const time = getTime("DD/MM/YYYY HH:mm:ss");
+      msg += `\n\n🆔 𝐔𝐬𝐞𝐫 𝐈𝐃: ${author}\n🆔 𝐆𝐫𝐨𝐮𝐩 𝐈𝐃: ${threadID}\n⏰ 𝐓𝐢𝐦𝐞: ${time}`;
+      msg += "\n\n🌟━【 🔹 𝐄𝐍𝐃 𝐎𝐅 𝐋𝐎𝐆 🔹】━🌟";
+
+      api.sendMessage(msg, personalGroupID);
+    }
+  }
 };
